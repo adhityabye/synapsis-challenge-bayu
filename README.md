@@ -1,6 +1,8 @@
 # synapsis_challenge
 
-A new Flutter project.
+This is the App test for requirements intern at Synapsis. Here is preview of this app.
+
+![image](https://github.com/adhityabye/synapsis-challenge-bayu/blob/main/assets/preview.png)
 
 ## Getting Started
 
