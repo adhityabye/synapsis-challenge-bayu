@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:synapsis_challenge/src/login/domain/entities/user_data.dart';
 import 'package:synapsis_challenge/src/login/presentation/widget/email_widget.dart';
 import 'package:synapsis_challenge/src/login/presentation/widget/password_widget.dart';
@@ -25,6 +26,28 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
+    loadRememberMe();
+  }
+
+  Future<void> loadRememberMe() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _rememberMe = prefs.getBool('remember_me') ?? false;
+      if (_rememberMe) {
+        _nikController.text = prefs.getString('nik') ?? '';
+        _passwordController.text = prefs.getString('password') ?? '';
+      }
+    });
+  }
+
+  Future<void> saveRememberMe() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _rememberMe = true;
+      prefs.setBool('remember_me', _rememberMe);
+      prefs.setString('nik', _nikController.text);
+      prefs.setString('password', _passwordController.text);
+    });
   }
 
   Future<void> loginFunc() async {
@@ -93,21 +116,21 @@ class _LoginPageState extends State<LoginPage> {
       appBar: AppBar(
         title: const Text("Home"),
       ),
-      body: Container(
-        margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Login to Synapsis",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
+      body: SingleChildScrollView(
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Login to Synapsis",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-            Expanded(
-              child: Container(
+              Container(
                 margin: const EdgeInsets.symmetric(vertical: 34),
                 child: Form(
                   key: _formKey,
@@ -127,22 +150,24 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 20),
                       RememberMeCheckbox(
+                        value: _rememberMe,
                         onChanged: (value) {
                           setState(() {
                             _rememberMe = value;
                           });
+                          saveRememberMe();
                         },
                       ),
                       const SizedBox(height: 35),
                       LoginButton(loginCallback: loginFunc),
                       const SizedBox(height: 20),
-                      FingerprintButton(),
+                      const FingerprintButton(),
                     ],
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -150,16 +175,20 @@ class _LoginPageState extends State<LoginPage> {
 }
 
 class RememberMeCheckbox extends StatefulWidget {
+  final bool value;
   final Function(bool) onChanged;
-  const RememberMeCheckbox({super.key, required this.onChanged});
+
+  const RememberMeCheckbox({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
 
   @override
   _RememberMeCheckboxState createState() => _RememberMeCheckboxState();
 }
 
 class _RememberMeCheckboxState extends State<RememberMeCheckbox> {
-  bool _rememberMe = false;
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -168,12 +197,11 @@ class _RememberMeCheckboxState extends State<RememberMeCheckbox> {
         CheckboxListTile(
           controlAffinity: ListTileControlAffinity.leading,
           title: const Text("Remember me"),
-          value: _rememberMe,
+          value: widget.value,
           onChanged: (value) {
             setState(() {
-              _rememberMe = value!;
+              widget.onChanged(value!);
             });
-            widget.onChanged(_rememberMe);
           },
         ),
       ],
